@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Рабочее место: Администратор</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="admin-page">
+    <div class="app-container">
+        <!-- Левое боковое меню -->
+        <aside class="sidebar">
+            <div class="brand-header">
+                <h2>“ОСТРЫЕ - ТУПЫЕ”</h2>
+                <p>Склад канцтоваров</p>
+            </div>
+            <nav class="nav-menu">
+                <a href="#" class="nav-link active">Главная</a>
+                <a href="#" class="nav-link">Управление товарами</a>
+                <a href="#" class="nav-link">Выдачи</a>
+                <a href="#" class="nav-link">Отчёты</a>
+            </nav>
+            <div class="logout-box">
+                <a href="/logout" class="logout-link">Выйти из системы</a>
+            </div>
+        </aside>
+
+        <!-- Главное содержимое -->
+        <main class="main-content">
+            <header class="top-header">
+                <h1>Рабочее место: Администратор</h1>
+            </header>
+
+            <!-- Карточки со статистикой -->
+            <section class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-title">Товаров в базе:</span>
+                    <span class="stat-value">{{ stats.types_count }}</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-title">Всего позиций:</span>
+                    <span class="stat-value">{{ stats.total_quantity }}</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-title">Критичекие остатки:</span>
+                    <span class="stat-value alert-text">{{ stats.critical_count }}</span>
+                </div>
+            </section>
+
+            <!-- Таблица с товарами -->
+            <section class="table-card">
+                <div class="table-header-bar">
+                    <h3>Текущие остатки</h3>
+                    <form method="GET" action="/admin" class="search-form">
+                        <input type="text" name="search" class="search-input" placeholder="Поиск товара..." value="{{ search_query }}">
+                        <button type="submit" class="btn-filter">Фильтр</button>
+                    </form>
+                </div>
+
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Наименование</th>
+                            <th>Категория</th>
+                            <th>Ед. изм.</th>
+                            <th>Количество</th>
+                            <th>Место хранения</th>
+                            <th>Статус</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in items %}
+                        <tr>
+                            <td>{{ item.id }}</td>
+                            <td><strong>{{ item.name }}</strong></td>
+                            <td>{{ item.category }}</td>
+                            <td>{{ item.unit }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>{{ item.storage_place }}</td>
+                            <td><span class="status-badge status-{{ item.status }}">{{ item.status }}</span></td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="no-data">Товары не найдены</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+</body>
+</html>
