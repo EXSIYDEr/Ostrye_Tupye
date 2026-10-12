@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Управление товарами</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="admin-page">
+    <div class="app-container">
+        <!-- Левое боковое меню -->
+        <aside class="sidebar">
+            <div class="brand-header">
+                <h2>“ОСТРЫЕ - ТУПЫЕ”</h2>
+                <p>Склад канцтоваров</p>
+            </div>
+            <nav class="nav-menu">
+                <a href="/admin" class="nav-link">Главная</a>
+                <a href="/manage_items" class="nav-link active">Управление товарами</a>
+                <a href="/issues" class="nav-link">Выдачи</a>
+                <a href="/reports" class="nav-link">Отчёты</a>
+            </nav>
+            <div class="logout-box">
+                <a href="/logout" class="logout-link">Выйти из системы</a>
+            </div>
+        </aside>
+
+        <!-- Главное содержимое -->
+        <main class="main-content">
+            <header class="top-header">
+                <h1>Управление товарами: Регистрация позиции</h1>
+            </header>
+
+            <section class="table-card" style="max-width: 600px;">
+                <h3 style="margin-bottom: 20px;">Добавление нового товара</h3>
+
+                {% if message %}
+                    <div style="color: #4caf50; margin-bottom: 20px; font-weight: bold; background: #1e3a1f; padding: 10px; border-radius: 4px;">
+                        {{ message }}
+                    </div>
+                {% endif %}
+
+                <form method="POST" action="/manage_items">
+                    <div class="form-group">
+                        <label>Наименование товара</label>
+                        <input type="text" name="name" class="input-field" placeholder="Например: Степлер канцелярский" required>
+                    </div>
+
+                    <div style="display: flex; gap: 15px;">
+                        <div class="form-group" style="flex: 1;">
+                            <label>Категория</label>
+                            <input type="text" name="category" class="input-field" placeholder="Офисные принадлежности" required>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>Ед. изм.</label>
+                            <input type="text" name="unit" class="input-field" placeholder="шт." required>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 15px;">
+                        <div class="form-group" style="flex: 1;">
+                            <label>Место хранения (Ячейка)</label>
+                            <input type="text" name="storage_place" class="input-field" placeholder="Например: Г-2-4" required>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 15px;">
+                        <div class="form-group" style="flex: 1;">
+                            <label>Начальное количество</label>
+                            <input type="number" name="quantity" class="input-field" value="0" min="0" required>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label>Минимальный запас (лимит)</label>
+                            <input type="number" name="min_limit" class="input-field" value="10" min="0" required>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-primary" style="margin-top: 10px;">Добавить товар в базу</button>
+                </form>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

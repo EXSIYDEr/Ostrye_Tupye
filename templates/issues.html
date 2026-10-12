@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Выдачи товара</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Локальные стили для двухколоночной сетки на этой странице */
+        .split-layout {
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        .form-section {
+            flex: 0 0 400px; /* Фиксированная ширина для формы */
+        }
+        .history-section {
+            flex: 1; /* Растягивается на все оставшееся место */
+        }
+    </style>
+</head>
+<body class="admin-page">
+    <div class="app-container">
+        <!-- Левое боковое меню -->
+        <aside class="sidebar">
+            <div class="brand-header">
+                <h2>“ОСТРЫЕ - ТУПЫЕ”</h2>
+                <p>Склад канцтоваров</p>
+            </div>
+            <nav class="nav-menu">
+                <a href="/admin" class="nav-link">Главная</a>
+                <a href="/manage_items" class="nav-link">Управление товарами</a>
+                <a href="/issues" class="nav-link active">Выдачи</a>
+                <a href="/reports" class="nav-link">Отчёты</a>
+            </nav>
+            <div class="logout-box">
+                <a href="/logout" class="logout-link">Выйти из системы</a>
+            </div>
+        </aside>
+
+        <!-- Главное содержимое -->
+        <main class="main-content">
+            <header class="top-header">
+                <h1>Оформление выдачи / Списания</h1>
+            </header>
+
+            <div class="split-layout">
+                <!-- Левая колонка: Форма выдачи -->
+                <section class="table-card form-section">
+                    <h3 style="margin-bottom: 20px;">Новая выдача</h3>
+
+                    {% if message %}
+                        <div style="color: #4caf50; margin-bottom: 15px; font-weight: bold; background: #1e3a1f; padding: 10px; border-radius: 4px; font-size: 13px;">
+                            {{ message }}
+                        </div>
+                    {% endif %}
+                    {% if error %}
+                        <div style="color: #ff4d4d; margin-bottom: 15px; font-weight: bold; background: #3a1e1e; padding: 10px; border-radius: 4px; font-size: 13px;">
+                            {{ error }}
+                        </div>
+                    {% endif %}
+
+                    <form method="POST" action="/issues">
+                        <div class="form-group">
+                            <label>Выберите товар со склада</label>
+                            <select name="item_id" class="input-field select-field" required>
+                                <option value="" disabled selected>-- Выберите позицию --</option>
+                                {% for item in items %}
+                                    <option value="{{ item.id }}">{{ item.name }} (Доступно: {{ item.quantity }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Количество к выдаче</label>
+                            <input type="number" name="quantity" class="input-field" value="1" min="1" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Причина списания / Кому выдано</label>
+                            <select name="reason" class="input-field select-field" required>
+                                <option value="Продажа (Отправка в магазин)">Продажа (Отправка в магазин)</option>
+                                <option value="Выдано сотруднику офиса">Выдано сотруднику офиса</option>
+                                <option value="Брак / Порча (Списание)">Брак / Порча (Списание)</option>
+                                <option value="Утеря (Инвентаризация)">Утеря (Инвентаризация)</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn-primary" style="margin-top: 15px;">Подтвердить выдачу</button>
+                    </form>
+                </section>
+
+                <!-- Правая колонка: История выдач -->
+                <section class="table-card history-section">
+                    <h3 style="margin-bottom: 20px;">Последние операции</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Дата и время</th>
+                                <th>Наименование</th>
+                                <th>Кол-во</th>
+                                <th>Причина</th>
+                                <th>Оформил</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in history %}
+                            <tr>
+                                <td style="color: #888;">{{ record.date }}</td>
+                                <td><strong>{{ record.item_name }}</strong></td>
+                                <td style="color: #ff9800; font-weight: bold;">-{{ record.quantity }}</td>
+                                <td>{{ record.reason }}</td>
+                                <td>{{ record.worker }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="no-data">История выдач пока пуста</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </section>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
