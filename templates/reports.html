@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Отчёты склада</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .split-layout { display: flex; gap: 20px; align-items: flex-start; }
+        .main-panel { flex: 2; } /* Левая колонка шире */
+        .side-panel { flex: 1; display: flex; flex-direction: column; gap: 20px; }
+
+        /* Стили для компактных строк статистики */
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #333;
+            font-size: 14px;
+        }
+        .stat-row:last-child { border-bottom: none; }
+        .stat-value { font-weight: bold; color: #4caf50; font-size: 16px; }
+        .warning-text { color: #ff4d4d; font-weight: bold; }
+    </style>
+</head>
+<body class="admin-page">
+    <div class="app-container">
+        <!-- Левое боковое меню -->
+        <aside class="sidebar">
+            <div class="brand-header">
+                <h2>“ОСТРЫЕ - ТУПЫЕ”</h2>
+                <p>Склад канцтоваров</p>
+            </div>
+            <nav class="nav-menu">
+                <a href="/admin" class="nav-link">Главная</a>
+                <a href="/manage_items" class="nav-link">Управление товарами</a>
+                <a href="/issues" class="nav-link">Выдачи</a>
+                <a href="/reports" class="nav-link active">Отчёты</a>
+            </nav>
+            <div class="logout-box">
+                <a href="/logout" class="logout-link">Выйти из системы</a>
+            </div>
+        </aside>
+
+        <!-- Главное содержимое -->
+        <main class="main-content">
+            <header class="top-header">
+                <h1>Аналитика и Отчёты</h1>
+            </header>
+
+            <div class="split-layout">
+                <!-- Левая панель: Дефицит товаров -->
+                <section class="table-card main-panel">
+                    <h3 style="margin-bottom: 15px; color: #ff4d4d;">Внимание: Требуется закупка (Критический остаток)</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Наименование</th>
+                                <th>Остаток</th>
+                                <th>Мин. лимит</th>
+                                <th>Ячейка</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in low_stock %}
+                            <tr>
+                                <td><strong>{{ item.name }}</strong></td>
+                                <td class="warning-text">{{ item.quantity }}</td>
+                                <td style="color: #888;">{{ item.min_limit }}</td>
+                                <td>{{ item.storage }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="no-data" style="color: #4caf50;">Все товары в достаточном количестве. Дефицита нет!</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- Правая панель: Сводка и Экспорт -->
+                <section class="side-panel">
+                    <!-- Карточка статистики -->
+                    <div class="table-card">
+                        <h3 style="margin-bottom: 15px;">Общая сводка</h3>
+                        <div class="stat-row">
+                            <span>Уникальных позиций:</span>
+                            <span class="stat-value" style="color: #fff;">{{ stats.total_categories }} шт.</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>Всего единиц на складе:</span>
+                            <span class="stat-value">{{ stats.total_items }} шт.</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>Операций выдачи:</span>
+                            <span class="stat-value" style="color: #ff9800;">{{ stats.total_issue_operations }}</span>
+                        </div>
+                        <div class="stat-row">
+                            <span>Всего выдано/списано:</span>
+                            <span class="stat-value" style="color: #ff9800;">{{ stats.total_issued_items }} шт.</span>
+                        </div>
+                    </div>
+
+                    <!-- Карточка экспорта -->
+                    <div class="table-card">
+                        <h3 style="margin-bottom: 15px;">Экспорт данных</h3>
+                        <p style="font-size: 13px; color: #aaa; margin-bottom: 15px; line-height: 1.4;">
+                            Сформируйте печатную версию текущей страницы для передачи руководству или бухгалтерии.
+                        </p>
+                        <!-- Кнопка вызывает стандартное окно печати браузера -->
+                        <button onclick="window.print()" class="btn-primary" style="width: 100%; background-color: #555;">🖨️ Распечатать отчёт</button>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

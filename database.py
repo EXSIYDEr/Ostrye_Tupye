@@ -32,6 +32,18 @@ def init_db():
         )
     ''')
 
+    # Таблица истории выдачи (списаний) товаров
+    cursor.execute('''
+            CREATE TABLE IF NOT EXISTS issues (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                item_name TEXT NOT NULL,
+                quantity INTEGER NOT NULL,
+                reason TEXT NOT NULL,
+                date_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                worker TEXT NOT NULL
+            )
+        ''')
+
     # Заполнение стартовыми данными (если база пустая)
     cursor.execute("SELECT COUNT(*) FROM items")
     if cursor.fetchone()[0] == 0:
@@ -98,3 +110,117 @@ def get_stats():
         "total_quantity": total_quantity or 0,
         "critical_count": critical_count or 0
     }
+
+
+def add_item_to_db(name, category, unit, quantity, min_limit, storage_place):
+    """Добавление нового товара в базу данных"""
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        INSERT INTO items (name, category, unit, quantity, min_limit, storage_place)
+        VALUES (?, ?, ?, ?, ?, ?)
+    ''', (name, category, unit, quantity, min_limit, storage_place))
+
+    conn.commit()
+    conn.close()
+
+
+def get_all_item_names():
+    """Получает список всех названий товаров для выпадающего списка"""
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute('SELECT id, name, quantity FROM items')
+    items = [{"id": r[0], "name": r[1], "quantity": r[2]} for r in cursor.fetchall()]
+    conn.close()
+    return items
+
+
+def issue_item(item_id, issue_quantity, reason, worker_name):
+    """Списывает товар и сохраняет запись в историю выдач"""
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+
+    # 1. Получаем текущее количество и имя товара
+    cursor.execute('SELECT name, quantity FROM items WHERE id = ?', (item_id,))
+    result = cursor.fetchone()
+
+    if not result:
+        conn.close()
+        return False, "Товар не найден."
+
+    item_name, current_qty = result
+
+    # 2. Проверяем, хватает ли товара
+    if current_qty < issue_quantity:
+        conn.close()
+        return False, f"Недостаточно товара. В наличии: {current_qty}."
+
+    # 3. Уменьшаем количество на складе
+    cursor.execute('UPDATE items SET quantity = quantity - ? WHERE id = ?', (issue_quantity, item_id))
+
+    # 4. Сохраняем в историю выдач
+    cursor.execute('''
+        INSERT INTO issues (item_name, quantity, reason, worker)
+        VALUES (?, ?, ?, ?)
+    ''', (item_name, issue_quantity, reason, worker_name))
+
+    conn.commit()
+    conn.close()
+    return True, f"Выдано {issue_quantity} ед. товара «{item_name}»."
+
+
+def get_issue_history():
+    """Получает последние 15 записей истории выдач"""
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    # Получаем дату и время в читаемом формате, сортируем от новых к старым
+    cursor.execute('''
+        SELECT id, item_name, quantity, reason, worker, datetime(date_time, 'localtime') 
+        FROM issues 
+        ORDER BY date_time DESC LIMIT 15
+    ''')
+    history = [{"id": r[0], "item_name": r[1], "quantity": r[2],
+                "reason": r[3], "worker": r[4], "date": r[5]} for r in cursor.fetchall()]
+    conn.close()
+    return history
+
+
+def get_low_stock_items():
+    """Получает список товаров, запас которых опустился до минимума или ниже"""
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    # Ищем товары, где количество меньше или равно минимальному лимиту
+    cursor.execute('''
+        SELECT name, quantity, min_limit, storage_place 
+        FROM items 
+        WHERE quantity <= min_limit
+        ORDER BY quantity ASC
+    ''')
+    low_stock = [{"name": r[0], "quantity": r[1], "min_limit": r[2], "storage": r[3]} for r in cursor.fetchall()]
+    conn.close()
+    return low_stock
+
+
+def get_reports_stats():
+    """Собирает общую сводку для склада"""
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+
+    # Статистика по товарам
+    cursor.execute('SELECT COUNT(*), SUM(quantity) FROM items')
+    items_stats = cursor.fetchone()
+
+    # Статистика по списаниям
+    cursor.execute('SELECT COUNT(*), SUM(quantity) FROM issues')
+    issues_stats = cursor.fetchone()
+
+    conn.close()
+
+    return {
+        "total_categories": items_stats[0] or 0,
+        "total_items": items_stats[1] or 0,
+        "total_issue_operations": issues_stats[0] or 0,
+        "total_issued_items": issues_stats[1] or 0
+    }
+
